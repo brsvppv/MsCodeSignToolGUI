@@ -24,7 +24,6 @@ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             </Grid>
     </Window>
 "@
-
 #Read XAML
 $reader = (New-Object System.Xml.XmlNodeReader $xaml) 
 try { $Form = [Windows.Markup.XamlReader]::Load( $reader ) }
@@ -32,8 +31,12 @@ catch { Write-Host "Unable to load Windows.Markup.XamlReader"; exit }
 # Store Form Objects In PowerShell
 $xaml.SelectNodes("//*[@Name]") | ForEach-Object { Set-Variable -Name ($_.Name) -Value $Form.FindName($_.Name) }
 
+#SHA256 Algorythm for Signing
 $fdAlg = "SHA256"
+#TimeStamp For Signing
 $tURL = "http://timestamp.digicert.com"
+
+#Select Code Signing Certificate
 Function SelectCertificate { 
     $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
         Multiselect = $false # Multiple files can be chosen
@@ -55,6 +58,7 @@ Function SelectCertificate {
     $txtCertificatePath.Text = "$filedirectory" + "\" + "$certName"
     return $FileBrowser.FileNames   
 }
+#Select File to Sign
 Function SelectFileToSign { 
     $FileBrowser = New-Object System.Windows.Forms.OpenFileDialog -Property @{
         Multiselect = $false # Multiple files can be chosen
@@ -76,6 +80,7 @@ Function SelectFileToSign {
     $txtFileToSignPath.Text = "$filedirectory" + "\" + "$fname"
     return $FileBrowser.FileNames   
 }
+#Select Directory / Set Signing Tool Path Location
 function SelectDirectory {
  
     $browse = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -102,53 +107,62 @@ function SelectDirectory {
         }
     }
 }
-function ButtonEnable{
-    if ($txtCertificatePath.Text -eq "Select Code Signing Certificate" -bor $txtFileToSignPath.Text -eq "Select File to Sign" -bor $pswdbCert.Password -eq ""){
+
+# $performSigning Button Validation Function
+function ButtonEnable {
+    if ($txtCertificatePath.Text -eq "Select Code Signing Certificate" -bor $txtFileToSignPath.Text -eq "Select File to Sign" -bor $pswdbCert.Password -eq "") {
         $btnPerformCodeSign.IsEnabled = $false
     }
-    else{
+    else {
         $btnPerformCodeSign.IsEnabled = $true
     }
 }
+#Set Values on Form Load
 $Form.Add_Loaded( {
         $btnPerformCodeSign.IsEnabled = $false
         $txtSignToolPath.Text = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
         #$pswdbCert.PasswordChar = '*'
     })
-$txtCertificatePath.Add_TextChanged({
-    ButtonEnable
-})
-$txtFileToSignPath.Add_TextChanged({
-    ButtonEnable
-})
-$pswdbCert.Add_PasswordChanged({
-    ButtonEnable
-})
 
+#Perofrm button validation on TextChange
+$txtCertificatePath.Add_TextChanged( {
+        ButtonEnable
+    })
+#Perofrm button validation on TextChange
+$txtFileToSignPath.Add_TextChanged( {
+        ButtonEnable
+    })
+#Perofrm button validation on PSWD/TextChange
+$pswdbCert.Add_PasswordChanged( {
+        ButtonEnable
+    })
+#SELECT SIGN TOOL PATH  
 #default sign tool location:
 #"C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64"
 $btnSelecSignToolPath.Add_Click( {
         SelectDirectory
     })
-
+#SELECT CERTIFICATE
 $btnSelectCert.Add_Click( {
         SelectCertificate
         
     })
+#SELECT FILE TO SIGN
 $btnFile.Add_Click( {
         SelectFileToSign
     })
-
-#Set-Location "$signToolLocaion"
+#Perform Signing 
 $btnPerformCodeSign.Add_Click( {
-    Set-Location $txtSignToolPath.Text
-    try{
-        ./signtool.exe sign /t "$tURL" /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text
-    }
-    Catch{
-        [System.Windows.MessageBox]::Show("An Error Occured During Signing  $_", 'ERROR', 'OK', 'Error') 
-    }
-    [System.Windows.MessageBox]::Show("Completed", 'File Sign Result', 'OK', 'Information')
-})
+        #Set Path SignTool Location
+        Set-Location $txtSignToolPath.Text
+        try {
+            #Signining Arugments
+            ./signtool.exe sign /t "$tURL" /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text
+        }
+        Catch {
+            [System.Windows.MessageBox]::Show("An Error Occured During Signing  $_", 'ERROR', 'OK', 'Error') 
+        }
+        [System.Windows.MessageBox]::Show("Completed", 'File Sign Result', 'OK', 'Information')
+    })
 
 $Form.ShowDialog() | out-null   
