@@ -142,19 +142,10 @@ $btnFile.Add_Click( {
 #Set-Location "$signToolLocaion"
 $btnPerformCodeSign.Add_Click( {
     Set-Location $txtSignToolPath.Text
-    Write-Host $txtSignToolPath.Text
-    Write-host $txtCertificatePath.Text
-    Write-host $txtFileToSignPath.Text
-    $Script:password = $pswdbCert.Password
-    write-host $pswdbCert.Password
-    #./signtool.exe sign /t "$tURL" /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text
-    $SignTool = "./signtool.exe sign " + "/t $tURL /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text"
-   # write-host "$password"
     try{
+
+        ./signtool.exe sign /t "$tURL" /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text
         
-        Invoke-Expression -Command: "$SignTool" -ErrorAction STOP
-    
-        #./signtool.exe sign /t "$tURL" /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text
     }
     Catch{
         [System.Windows.MessageBox]::Show("An Error Occured During Signing  $_", 'ERROR', 'OK', 'Error') 
