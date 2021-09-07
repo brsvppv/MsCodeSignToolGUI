@@ -121,7 +121,7 @@ $txtCertificatePath.Add_TextChanged({
 $txtFileToSignPath.Add_TextChanged({
     ButtonEnable
 })
-$pswdbCert.Add_LostFocus({
+$pswdbCert.Add_PasswordChanged({
     ButtonEnable
 })
 
@@ -143,9 +143,7 @@ $btnFile.Add_Click( {
 $btnPerformCodeSign.Add_Click( {
     Set-Location $txtSignToolPath.Text
     try{
-
         ./signtool.exe sign /t "$tURL" /fd $fdAlg /f $txtCertificatePath.Text /p $pswdbCert.Password $txtFileToSignPath.Text
-        
     }
     Catch{
         [System.Windows.MessageBox]::Show("An Error Occured During Signing  $_", 'ERROR', 'OK', 'Error') 
